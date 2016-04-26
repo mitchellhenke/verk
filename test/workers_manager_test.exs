@@ -88,17 +88,20 @@ defmodule Verk.WorkersManagerTest do
     queue_manager_name = "queue_manager_name"
     pool_name = "pool_name"
     pool_size = "size"
-    timeout = 1000
+    timeout = 1500
+    Application.put_env(:verk, :workers_manager_timeout, timeout)
     state = %State{ queue_name: queue_name, queue_manager_name: queue_manager_name,
                     pool_name: pool_name, pool_size: pool_size,
                     monitors: :workers_manager, timeout: timeout }
     expect(Verk.QueueStats, :reset_started, [queue_name], :ok)
 
-    assert init([name, queue_name, queue_manager_name, pool_name, pool_size, timeout])
+    assert init([name, queue_name, queue_manager_name, pool_name, pool_size])
       == { :ok, state }
 
     assert_received :enqueue_inprogress
     assert validate Verk.QueueStats
+
+    Application.put_env(:verk, :workers_manager_timeout, nil)
   end
 
   test "handle info enqueue_inprogress" do

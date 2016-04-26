@@ -12,9 +12,12 @@ defmodule Verk.WorkersManager do
   alias Verk.QueueManager
   alias Verk.Log
 
+  @default_timeout 1000
+  @timeout Application.get_env(:verk, :workers_manager_timeout, @default_timeout)
+
   defmodule State do
     @moduledoc false
-    defstruct [:queue_name, :pool_name, :queue_manager_name, :pool_size, :monitors, :timeout]
+    defstruct [:queue_name, :pool_name, :queue_manager_name, :pool_size, :monitors]
   end
 
   @doc """
@@ -26,8 +29,8 @@ defmodule Verk.WorkersManager do
   end
 
   @doc false
-  def start_link(workers_manager_name, queue_name, queue_manager_name, pool_name, pool_size, timeout) do
-    gen_server_args = [workers_manager_name, queue_name, queue_manager_name, pool_name, pool_size, timeout]
+  def start_link(workers_manager_name, queue_name, queue_manager_name, pool_name, pool_size) do
+    gen_server_args = [workers_manager_name, queue_name, queue_manager_name, pool_name, pool_size]
     GenServer.start_link(__MODULE__, gen_server_args, name: workers_manager_name)
   end
 
@@ -71,14 +74,13 @@ defmodule Verk.WorkersManager do
   @doc """
   Create a table to monitor workers saving data about the assigned queue/pool
   """
-  def init([workers_manager_name, queue_name, queue_manager_name, pool_name, size, timeout]) do
+  def init([workers_manager_name, queue_name, queue_manager_name, pool_name, size]) do
     monitors = :ets.new(workers_manager_name, [:named_table, read_concurrency: true])
     state = %State{queue_name: queue_name,
                   queue_manager_name: queue_manager_name,
                   pool_name: pool_name,
                   pool_size: size,
-                  monitors: monitors,
-                  timeout: timeout}
+                  monitors: monitors}
 
     Logger.info "Workers Manager started for queue #{queue_name}"
 
@@ -103,7 +105,7 @@ defmodule Verk.WorkersManager do
         reason ->
           Logger.error("Failed to fetch a job. Reason: #{inspect reason}")
       end
-      {:noreply, state, state.timeout}
+      {:noreply, state, @timeout}
     else
       {:noreply, state}
     end
