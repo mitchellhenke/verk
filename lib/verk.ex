@@ -95,3 +95,9 @@ defmodule Verk do
    "#{part1}#{part2}"
   end
 end
+
+defmodule ExampleWorker do
+  def perform(arg1, arg2) do
+    arg1 + arg2
+  end
+end
