@@ -1,46 +1,34 @@
-defmodule Verk.JobProcessingBench do
-  use Benchfella
-
-   setup_all do
-     { :ok, _ } = Application.ensure_all_started(:tzdata)
-
-     Verk.Supervisor.start_link
-     Verk.add_queue(:benchmark, 100)
-     {:ok, []}
-   end
-
-  bench "Verk", [jobs: jobs] do
-    Enum.each(jobs, fn(job) ->
-      Verk.enqueue(job)
-    end)
-
-    check_job_queue
-  end
-
-  defp check_job_queue do
-    Verk.Queue.count(:benchmark)
-    |> check_job_queue
-  end
-
-  defp check_job_queue({:ok, 0}) do
-    :ok
-  end
-
-  defp check_job_queue(_) do
-    :timer.sleep(100)
-    check_job_queue
-  end
-
-  defp jobs do
-    Enum.map(1..100000, fn(x) ->
-      %Verk.Job{queue: :benchmark, class: "ExampleWorker", args: [x, 1]}
-    end)
+defmodule LastWorker do
+  def perform() do
+    send(:benchmarking_process, :done)
   end
 end
-
 
 defmodule ExampleWorker do
   def perform(a, b) do
     a + b
+  end
+end
+defmodule Verk.JobProcessingBench do
+  { :ok, _ } = Application.ensure_all_started(:tzdata)
+
+  Verk.Supervisor.start_link
+  Verk.add_queue(:benchmark, 75)
+  Verk.Queue.clear("benchmark")
+  Process.register(self, :benchmarking_process)
+  jobs = Enum.map(1..1000, fn(x) ->
+    %Verk.Job{queue: :benchmark, class: "ExampleWorker", args: [x, 1]}
+  end)
+
+  start = :erlang.monotonic_time(:micro_seconds)
+  Enum.each(jobs, fn(job) ->
+    Verk.enqueue(job)
+  end)
+
+  last_job = %Verk.Job{queue: :benchmark, class: "LastWorker", args: []}
+  Verk.enqueue(last_job)
+
+  receive do
+    :done -> IO.puts "#{(:erlang.monotonic_time(:micro_seconds) - start)/1000.0} ms"
   end
 end

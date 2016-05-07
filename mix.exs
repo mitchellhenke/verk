@@ -34,8 +34,7 @@ defmodule Verk.Mixfile do
      { :earmark, "~> 0.1.17", only: :docs },
      { :ex_doc, "~> 0.8.0", only: :docs },
      { :coverex, "~> 1.4.7", only: :test },
-     { :meck, "~> 0.8", only: :test },
-     { :benchfella, "~> 0.3", only: :bench}]
+     { :meck, "~> 0.8", only: :test }]
   end
 
   defp package do
