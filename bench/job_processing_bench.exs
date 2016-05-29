@@ -16,10 +16,11 @@ defmodule Verk.JobProcessingBench do
   Verk.Queue.clear("benchmark")
   Process.register(self, :benchmarking_process)
   Enum.each(1..100000, fn(_) ->
-    Verk.enqueue %Verk.Job{queue: :benchmark, class: "ExampleWorker", args: []}
+    {:ok, _ } = Verk.enqueue %Verk.Job{queue: :benchmark, class: "ExampleWorker", args: []}
   end)
 
-  :timer.sleep(1000)
+  IO.inspect "wait"
+  :timer.sleep(2000)
   Verk.enqueue %Verk.Job{queue: :benchmark, class: "LastWorker", args: []}
 
   start = :erlang.monotonic_time(:micro_seconds)

@@ -21,5 +21,5 @@ end
 if Mix.env == :prod do
   config :logger, backends: [] # Silent logging for tests
   config :tzdata, :autoupdate, :disabled
-  config :verk, queues: [], redis_url: "redis://127.0.0.1:6379/2", workers_manager_timeout: 0
+  config :verk, queues: [], redis_url: "redis://127.0.0.1:6379", workers_manager_timeout: 0
 end
