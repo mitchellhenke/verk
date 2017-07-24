@@ -78,14 +78,9 @@ defmodule Verk do
     schedule(%Job{job | jid: generate_jid()}, perform_at, redis)
   end
   def schedule(job = %Job{jid: jid}, perform_at = %DateTime{}, redis) do
-    if Time.after?(Time.now, perform_at) do
-      #past time to do the job
-      enqueue(job, redis)
-    else
-      case Redix.command(redis, ["ZADD", @schedule_key, DateTime.to_unix(perform_at), Poison.encode!(job)]) do
-        {:ok, _} -> {:ok, jid}
-        {:error, reason} -> {:error, reason}
-      end
+    case Redix.command(redis, ["ZADD", @schedule_key, DateTime.to_unix(perform_at), Poison.encode!(job)]) do
+      {:ok, _} -> {:ok, jid}
+      {:error, reason} -> {:error, reason}
     end
   end
 
